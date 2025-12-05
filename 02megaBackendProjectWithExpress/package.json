@@ -1,0 +1,17 @@
+{
+  "name": "02megabackendprojectwithexpress",
+  "version": "1.0.0",
+  "description": "start new project with backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nothing"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
