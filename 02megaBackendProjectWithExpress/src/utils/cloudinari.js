@@ -7,20 +7,25 @@ import fs from "fs"
 
     // Configuration
     cloudinary.config({ 
-        cloud_name: 'dpapxys1s', 
-        api_key: '437144422945768', 
-        api_secret: '<your_api_secret>' // Click 'View API Keys' above to copy your API secret
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+        api_key: process.env.CLOUDINARY_API_KEY, 
+        api_secret: process.env.CLOUDINARY_API_SECRET // Click 'View API Keys' above to copy your API secret
     });
 
 
     const uploadOnCloudinary = async (localFilePath)=>{
+
+        console.log(localFilePath);
+        
         try {
             if(!localFilePath) return null ;
             const response = await cloudinary.uploader.upload(localFilePath,{
                 resource_type : "auto"
             })
 
-            fs.unlink(localFilePath)
+            fs.unlinkSync(localFilePath)
+            console.log(response);
+            
             return response
         } catch (error) {
             fs.unlinkSync(localFilePath)
