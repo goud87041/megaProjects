@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken"
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
-    const user =await User.findById(userId)
+    const user = await User.findById(userId)
     const accessToken = user.generateAccessToken()
     const refreshToken = user.generateRefreshToken()
     user.refreshToken = refreshToken
@@ -122,14 +122,14 @@ const loginUser = asyncHandler(async (req, res) => {
   const { email, userName, password } = req.body
 
   console.log(email);
-  
+
 
   if (!(userName || email)) {
     throw new ApiError(404, "email or userName is required")
   }
 
 
-  const user =  await User.findOne(
+  const user = await User.findOne(
     {
       $or: [{ email }, { userName }]
     }
@@ -176,7 +176,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
 const logout = asyncHandler(async (req, res) => {
- await User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     req.user._id,
     {
       $set:
@@ -203,56 +203,190 @@ const logout = asyncHandler(async (req, res) => {
     .json(200, {}, "User logged Out ")
 })
 
-const refreshAccessToken = asyncHandler(async (req , res)=>{
+const refreshAccessToken = asyncHandler(async (req, res) => {
 
   const incommingRefreshToken = req.cookie.refreshToken || req.body.refreshToken
 
-  if(!incommingRefreshToken){
-    throw new ApiError(401 ,"unauthrized request")
+  if (!incommingRefreshToken) {
+    throw new ApiError(401, "unauthrized request")
   }
 
- try {
-   const decodedToken = jwt.verify(incommingRefreshToken , process.env.REFRESH_TOKEN_SECRET)
- 
-   const user = await User.findById(decodedToken?._id)
- 
-   if(!user ){
-     throw new ApiError(401 ,"Invaild refresh Token")
-   }
- 
-   if(incommingRefreshToken !== user?.refreshToken)
-     throw new ApiError(401 ,"Refresh token has been expired or used")
- 
- 
-   options ={
-     httpOnly : true,
-     secure : true
-   }
- 
-   const { accessToken , newRefreshToken} = generateAccessAndRefreshToken(user?._id)
- 
- return res
- .status(200)
- .cookie("accessToken",accessToken , options)
- .cookie("refreshToken", newRefreshToken, options)
- .json(
-   200, 
-   {
-     accessToken , refreshToken : newRefreshToken
-   },
-   "access token refreshed"
- 
- )
- } catch (error) {
-  throw new ApiError(401 , error?.message || "Invaild refresh Token")
- }
+  try {
+    const decodedToken = jwt.verify(incommingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
 
+    const user = await User.findById(decodedToken?._id)
+
+    if (!user) {
+      throw new ApiError(401, "Invaild refresh Token")
+    }
+
+    if (incommingRefreshToken !== user?.refreshToken)
+      throw new ApiError(401, "Refresh token has been expired or used")
+
+
+    options = {
+      httpOnly: true,
+      secure: true
+    }
+
+    const { accessToken, newRefreshToken } = generateAccessAndRefreshToken(user?._id)
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        200,
+        {
+          accessToken, refreshToken: newRefreshToken
+        },
+        "access token refreshed"
+
+      )
+  } catch (error) {
+    throw new ApiError(401, error?.message || "Invaild refresh Token")
+  }
+
+})
+
+
+const ChangeUserPassword = asyncHandler(async (req, res) => {
+  const { oldPasword, newPassword } = req.body
+
+  const user = await User.findById(req.user?.id)
+
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPasword)
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Invaild old Password")
+  }
+
+  user.password = newPassword;
+
+  await user.save({ validateBeforeSave: false })
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password Change successfully "))
+
+})
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  if (!user) {
+    throw new ApiError(400, "user does not exsit")
+  }
+
+  return res
+    .status(400)
+    .json(new ApiResponse(400, { user }, "get currect user successfully"))
+
+})
+
+const updateAccountDetails = asyncHandler(async(req,res)=>{
+  const {fullname , email} = req.body
+
+  if(!(fullname || email)){
+    throw new ApiError(200,"full Name or email required")
+  }
+
+  const user =await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set : {
+        fullname,
+        email
+      }
+    },
+    {new : true}
+  ).select("-password")
+
+  return res
+  .status(400)
+  .json(new ApiResponse(400,user,"account Details update successfully"))
+})
+
+const updateUserAvatar = asyncHandler(async (req, res)=>{
+
+  const avatarLocalPath = req.file?.path 
+  
+  if(!avatarLocalPath){
+    throw new ApiError(400 ,"Avatar file is missing")
+  }
+
+
+//  const oldavatr = User.findById(res.user?._id)
+  // delete old avatr image
+
+  // deleteFromCludinary()
+
+  const avatr = await uploadOnCloudinary(avatarLocalPath)
+
+  const user =  User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set : {
+          avatr : avatr.url
+        }
+      },
+      {new : true}
+  )
+
+  return res
+  .status(400)
+  .json(new ApiResponse(400,user , "avatr image update successfully"))
+
+
+
+})
+
+
+const updateUserCouverImage = asyncHandler(async (req, res)=>{
+
+  const coverImageLocalPath = req.file?.path 
+  
+  if(!coverImageLocalPath){
+    throw new ApiError(400 ,"cover image file is missing")
+  }
+
+
+//  const oldavatr = User.findById(res.user?._id)
+  // delete old avatr image
+
+  // deleteFromCludinary()
+
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+  const user =  User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set : {
+          coverImage : coverImage.url
+        }
+      },
+      {new : true}
+  )
+
+  return res
+  .status(400)
+  .json(new ApiResponse(400,user , "cover image update successfully"))
+
+
+
+})
+
+
+
+
+export {
+  registerUser,
+  loginUser,
+  logout,
+  refreshAccessToken,
+  ChangeUserPassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateUserAvatar,
+updateUserCouverImage
 }
-
-)
-
-
-
-
-
-export   { registerUser, loginUser, logout }
