@@ -108,7 +108,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
 })
 
-
 const loginUser = asyncHandler(async (req, res) => {
 
   // email, password -> body
@@ -176,7 +175,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
 })
 
-
 const logout = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
@@ -205,7 +203,6 @@ const logout = asyncHandler(async (req, res) => {
     .json(200, {}, "User logged Out ")
 })
 
- 
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
 
@@ -256,9 +253,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 
 })
-
-
-
 
 const ChangeUserPassword = asyncHandler(async (req, res) => {
   // const { oldPassword, newPassword } = req.body
@@ -327,6 +321,9 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
   const avatarLocalPath = req.file?.path
 
+  console.log("i am here : " + req.file);
+  
+
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is missing")
   }
@@ -337,30 +334,36 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
   // deleteFromCludinary()
 
-  const avatr = await uploadOnCloudinary(avatarLocalPath)
+  const uploaded = await uploadOnCloudinary(avatarLocalPath)
 
-  const user = User.findByIdAndUpdate(
+  // console.log("hello i am here : " + avatr.url);
+
+  console.log("current user : ", req.user?._id);
+  
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        avatr: avatr.url
+        avtar: uploaded.url
       }
     },
     { new: true }
   )
 
+  // console.log(avatr.url);
+  
   return res
-    .status(400)
-    .json(new ApiResponse(400, user, "avatr image update successfully"))
-
-
-
+    .status(200)
+    .json(new ApiResponse(200, user, "avatr image update successfully"))
 })
 
 
 const updateUserCouverImage = asyncHandler(async (req, res) => {
 
   const coverImageLocalPath = req.file?.path
+
+  console.log("here is file from req " + req?.file);
+  
 
   if (!coverImageLocalPath) {
     throw new ApiError(400, "cover image file is missing")
@@ -374,7 +377,7 @@ const updateUserCouverImage = asyncHandler(async (req, res) => {
 
   const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -384,9 +387,12 @@ const updateUserCouverImage = asyncHandler(async (req, res) => {
     { new: true }
   )
 
+  console.log("i come  hare");
+  
+
   return res
-    .status(400)
-    .json(new ApiResponse(400, user, "cover image update successfully"))
+    .status(200)
+    .json(new ApiResponse(200, user, "cover image update successfully"))
 
 
 

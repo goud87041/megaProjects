@@ -45,12 +45,12 @@ router.route("/change-password").post(verifyJWT , ChangeUserPassword)
 router.route("/current-user").get(verifyJWT , getCurrentUser)
 router.route("/update-account").post(verifyJWT ,updateAccountDetails)
 
-router.route("/avatar").get(verifyJWT,upload.single("avtar"),updateUserAvatar)
-router.route("/cover-image").get(verifyJWT,upload.single("coverImage"),updateUserCouverImage)
+router.route("/avatar").post(verifyJWT,upload.single("avtar"),updateUserAvatar)
+router.route("/cover-image").patch(verifyJWT,upload.single("coverImage"),updateUserCouverImage)
 
 router.route("/channel/:username").get(verifyJWT,getUserChannelProfile)
 router.route("/history").get(verifyJWT,getUserWatchHistory)
 
-
+                             
 
 export default router
